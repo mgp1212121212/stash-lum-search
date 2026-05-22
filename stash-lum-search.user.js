@@ -111,6 +111,54 @@ async function searchHF(tracker = "HF") {
 
     window.open(finalURL, "_blank");
 }
+async function searchFileHF(tracker = "HF") {
+
+    const scene_id = window.location.href
+        .split("/scenes/")[1]
+        .split("?")[0];
+
+    const query = `
+    query {
+        findScene(id: ${scene_id}) {
+            files {
+                basename
+            }
+        }
+    }`;
+
+    const response = await fetch("/graphql", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            query: query
+        })
+    });
+
+    const json = await response.json();
+
+    const scene = json?.data?.findScene;
+
+    if (!scene) {
+        console.error("Scene not found");
+        return;
+    }
+
+
+    const fileBase = scene.files[0].basename;
+
+
+
+    // Manual URL construction
+    const finalURL =
+        HF_DEFAULT + "/torrents.php" +
+        "?filelist=" + fileBase
+
+    console.log(finalURL);
+
+    window.open(finalURL, "_blank");
+}
 
 async function searchEmp(tracker = "EMP") {
     const scene_id = window.location.href
@@ -177,6 +225,56 @@ async function searchEmp(tracker = "EMP") {
     window.open(finalURL, "_blank");
 }
 
+async function searchFileEMP(tracker = "EMP") {
+
+    const scene_id = window.location.href
+        .split("/scenes/")[1]
+        .split("?")[0];
+
+    const query = `
+    query {
+        findScene(id: ${scene_id}) {
+            files {
+                basename
+            }
+        }
+    }`;
+
+    const response = await fetch("/graphql", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            query: query
+        })
+    });
+
+    const json = await response.json();
+
+    const scene = json?.data?.findScene;
+
+    if (!scene) {
+        console.error("Scene not found");
+        return;
+    }
+
+
+    const fileBase = scene.files[0].basename;
+
+
+
+    // Manual URL construction
+    const finalURL =
+        EMPORNIUM_DEFAULT + "/torrents.php" +
+        "?filelist=" + fileBase
+
+    console.log(finalURL);
+
+    window.open(finalURL, "_blank");
+}
+
+
 function isScenePage() {
     return window.location.pathname.includes("/scenes/");
 }
@@ -223,6 +321,49 @@ function injectHFButton() {
 
     console.log("HF button injected");
 }
+function injectHFFileButton() {
+
+    // only on scene pages
+    if (!isScenePage()) return;
+
+    const operationMenu = document.getElementById("operation-menu");
+
+    if (!operationMenu) return;
+
+    // prevent duplicates
+    if (document.getElementById("hf-search-file")) return;
+
+    // div immediately after operation-menu
+    const targetDiv = operationMenu.nextElementSibling;
+
+    if (!targetDiv) return;
+
+    const btn = document.createElement("a");
+
+    btn.id = "hf-search-file";
+    btn.href = "#";
+    btn.role = "button";
+    btn.title = "Search File HappyFappy";
+
+    btn.classList.add(
+        "bg-secondary",
+        "text-white",
+        "dropdown-item"
+    );
+
+    btn.innerText = "Search File HappyFappy";
+
+    btn.addEventListener("click", function (e) {
+        e.preventDefault();
+        searchFileHF("HF");
+    });
+
+    // append as LAST element inside target div
+    targetDiv.appendChild(btn);
+
+    console.log("HF button injected");
+}
+
 function injectEmpButton() {
 
     // only on scene pages
@@ -265,15 +406,60 @@ function injectEmpButton() {
 
     console.log("Emp button injected");
 }
+function injectEmpFileButton() {
 
+    // only on scene pages
+    if (!isScenePage()) return;
+
+    const operationMenu = document.getElementById("operation-menu");
+
+    if (!operationMenu) return;
+
+    // prevent duplicates
+    if (document.getElementById("emp-search-file")) return;
+
+    // div immediately after operation-menu
+    const targetDiv = operationMenu.nextElementSibling;
+
+    if (!targetDiv) return;
+
+    const btn = document.createElement("a");
+
+    btn.id = "emp-search-file";
+    btn.href = "#";
+    btn.role = "button";
+    btn.title = "Search File Empornium";
+
+    btn.classList.add(
+        "bg-secondary",
+        "text-white",
+        "dropdown-item"
+    );
+
+    btn.innerText = "Search File Empornium";
+
+    btn.addEventListener("click", function (e) {
+        e.preventDefault();
+        searchFileEMP("EMP");
+    });
+
+    // append as LAST element inside target div
+    targetDiv.appendChild(btn);
+
+    console.log("EMP button injected");
+}
 // initial attempt
 injectEmpButton();
 injectHFButton();
+injectEmpFileButton();
+injectHFFileButton();
 
 // watch SPA navigation / DOM updates
 const hfObserver = new MutationObserver(function () {
     injectEmpButton();
     injectHFButton();
+    injectEmpFileButton();
+    injectHFFileButton();
 });
 
 hfObserver.observe(document.body, {
